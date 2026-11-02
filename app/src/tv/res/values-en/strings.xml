@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Zapp TV (fork): own name so it can be told apart from Zapp when both are installed -->
+<resources>
+	<string name="app_name">Zapp TV</string>
+</resources>

@@ -38,6 +38,26 @@ android {
 		compose = true
 	}
 
+	// Zapp TV (fork): the tv build type uses release's build-type code (ZappApplication) instead of a copy
+	sourceSets {
+		tv {
+			java.srcDirs += 'src/release/java'
+		}
+	}
+
+	// Zapp TV (fork): signing key from environment variables (CI secrets); unsigned without them
+	signingConfigs {
+		tv {
+			def keystore = System.getenv("ZAPP_TV_KEYSTORE")
+			if (keystore) {
+				storeFile file(keystore)
+				storePassword System.getenv("ZAPP_TV_KEYSTORE_PASSWORD")
+				keyAlias System.getenv("ZAPP_TV_KEY_ALIAS")
+				keyPassword System.getenv("ZAPP_TV_KEY_PASSWORD")
+			}
+		}
+	}
+
 	buildTypes {
 		debug {
 			shrinkResources false
@@ -57,6 +77,17 @@ android {
 			proguardFiles getDefaultProguardFile(
 				'proguard-android-optimize.txt'),
 				'proguard-rules.pro'
+		}
+		// Zapp TV (fork): release build with its own package name, installable next to Zapp
+		// (after "release": initWith copies its settings at this point)
+		tv {
+			initWith release
+			applicationIdSuffix '.tv'
+			versionNameSuffix '-tv'
+			matchingFallbacks = ['release']
+			if (System.getenv("ZAPP_TV_KEYSTORE")) {
+				signingConfig signingConfigs.tv
+			}
 		}
 	}
 
@@ -82,6 +113,18 @@ android {
 		}
 	}
 	namespace 'de.christinecoenen.code.zapp'
+}
+
+// Zapp TV (fork): the CI build number goes into the tv version ("9.1.1-tv.12", code 78012), so every
+// release is newer than the last one for Android and Obtainium. Local builds use 0.
+androidComponents {
+	onVariants(selector().withBuildType("tv")) { variant ->
+		def build = (System.getenv("ZAPP_TV_BUILD") ?: "0") as int
+		variant.outputs.each { output ->
+			output.versionCode.set(output.versionCode.get() * 1000 + build)
+			output.versionName.set(output.versionName.get() + "." + build)
+		}
+	}
 }
 
 ksp {
