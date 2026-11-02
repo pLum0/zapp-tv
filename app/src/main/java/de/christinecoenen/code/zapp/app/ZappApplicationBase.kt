@@ -55,6 +55,9 @@ abstract class ZappApplicationBase : Application() {
 			modules(KoinModules.AppModule)
 		}.koin
 
+		// Zapp TV: load the custom channel playlists in the background
+		de.christinecoenen.code.zapp.models.channels.custom.CustomChannels.init(this)
+
 		val settingsRepository = SettingsRepository(this)
 		AppCompatDelegate.setDefaultNightMode(settingsRepository.uiMode)
 

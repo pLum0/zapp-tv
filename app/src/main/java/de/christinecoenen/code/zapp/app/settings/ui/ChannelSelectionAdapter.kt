@@ -47,6 +47,7 @@ internal class ChannelSelectionAdapter(context: Context) :
 			setVisibility()
 
 			binding.logo.setImageResource(channel.drawableId)
+			de.christinecoenen.code.zapp.models.channels.custom.CustomChannels.applyLogo(binding.logo, channel) // Zapp TV
 			binding.imageHandle.contentDescription = channel.name
 
 			if (channel.subtitle == null) {

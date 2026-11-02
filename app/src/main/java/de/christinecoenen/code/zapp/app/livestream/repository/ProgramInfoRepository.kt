@@ -16,6 +16,10 @@ class ProgramInfoRepository(private val zappApi: IZappBackendApiService) {
 	 * @throws RuntimeException if api response is empty and no show in cache
 	 */
 	suspend fun getShow(channelId: String): LiveShow = withContext(Dispatchers.IO) {
+		// Zapp TV: custom channels get their programme from the playlist's XMLTV guide
+		if (de.christinecoenen.code.zapp.models.channels.custom.CustomChannels.isCustom(channelId)) {
+			return@withContext de.christinecoenen.code.zapp.models.channels.custom.CustomChannels.liveShow(channelId)
+		}
 		val newChannel = getById(channelId)
 		return@withContext getShow(newChannel)
 	}

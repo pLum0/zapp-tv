@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Zapp TV: custom channels from M3U playlists -->
+<resources>
+	<string name="pref_custom_channel_urls_title">Custom channel lists (M3U)</string>
+	<string name="pref_custom_channel_urls_summary">Addresses of M3U playlists, separated by spaces. The channels appear in the “Custom” tab and can be sorted and hidden under “Channel selection”.</string>
+	<string name="pref_custom_channel_urls_dialog_message">e.g. a TVheadend playlist. Separate several addresses with spaces.</string>
+	<string name="activity_main_tab_custom">Custom</string>
+</resources>

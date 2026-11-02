@@ -135,6 +135,7 @@ class MainActivity : AppCompatActivity(), MenuProvider {
 		appBarConfiguration = AppBarConfiguration(
 			setOf(
 				R.id.channelListFragment,
+				R.id.customChannelListFragment, // Zapp TV
 				R.id.mediathekListFragment,
 				R.id.personalFragment,
 			),
