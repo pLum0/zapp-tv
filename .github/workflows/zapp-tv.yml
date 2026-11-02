@@ -1,0 +1,115 @@
+# Zapp TV: keep the fork's "tv" branch rebased on upstream Zapp and publish a signed APK release for
+# Obtainium (https://github.com/pLum0/zapp-tv/releases).
+#
+#   weekly (Mon) / manual:  rebase tv onto cemrich/zapp main; only if upstream moved: build + release
+#   push to tv:             build + release (our own changes)
+#   failure (e.g. a rebase conflict): nothing is published, ntfy notification (priority 4)
+#
+# Secrets: ZAPP_TV_KEYSTORE_B64 (base64 of the .jks), ZAPP_TV_KEYSTORE_PASSWORD, ZAPP_TV_KEY_ALIAS,
+#          ZAPP_TV_KEY_PASSWORD, NTFY_URL (https://<server>/<topic>)
+name: Zapp TV
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+  push:
+    branches: [tv]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: zapp-tv
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: tv
+          fetch-depth: 0
+
+      - name: Rebase onto upstream Zapp
+        id: rebase
+        run: |
+          git config user.name "zapp-tv-bot"
+          git config user.email "zapp-tv-bot@users.noreply.github.com"
+          git remote add upstream https://github.com/cemrich/zapp.git
+          git fetch --quiet upstream main
+          if git merge-base --is-ancestor upstream/main HEAD; then
+            echo "tv already contains upstream main"
+            echo "moved=false" >> "$GITHUB_OUTPUT"
+          else
+            if ! git rebase upstream/main; then
+              git rebase --abort
+              echo "::error::rebase onto upstream main has conflicts - resolve by hand"
+              exit 1
+            fi
+            echo "moved=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Decide whether to build
+        id: decide
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ steps.rebase.outputs.moved }}" = "true" ] \
+             || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            echo "upstream unchanged, nothing to do"
+          fi
+
+      - uses: actions/setup-java@v4
+        if: steps.decide.outputs.build == 'true'
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Build signed APK
+        if: steps.decide.outputs.build == 'true'
+        env:
+          ZAPP_TV_BUILD: ${{ github.run_number }}
+          ZAPP_TV_KEYSTORE_PASSWORD: ${{ secrets.ZAPP_TV_KEYSTORE_PASSWORD }}
+          ZAPP_TV_KEY_ALIAS: ${{ secrets.ZAPP_TV_KEY_ALIAS }}
+          ZAPP_TV_KEY_PASSWORD: ${{ secrets.ZAPP_TV_KEY_PASSWORD }}
+        run: |
+          export ZAPP_TV_KEYSTORE="$RUNNER_TEMP/zapp-tv.jks"
+          echo "${{ secrets.ZAPP_TV_KEYSTORE_B64 }}" | base64 -d > "$ZAPP_TV_KEYSTORE"
+          ./gradlew --no-daemon --console=plain :app:assembleTv
+          rm -f "$ZAPP_TV_KEYSTORE"
+          APK=app/build/outputs/apk/tv/app-tv.apk
+          AAPT2=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2
+          VERSION=$("$AAPT2" dump badging "$APK" | grep -o "versionName='[^']*'" | cut -d"'" -f2)
+          "$(dirname "$AAPT2")/apksigner" verify "$APK"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          cp "$APK" "zapp-tv-$VERSION.apk"
+
+      - name: Push rebased branch
+        if: steps.rebase.outputs.moved == 'true' && steps.decide.outputs.build == 'true'
+        run: |
+          git push --force-with-lease origin HEAD:tv
+          git push origin upstream/main:main
+
+      - name: Release
+        if: steps.decide.outputs.build == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          UPSTREAM=$(git rev-parse --short upstream/main)
+          gh release create "v$VERSION" "zapp-tv-$VERSION.apk" --target "$(git rev-parse HEAD)" \
+            --title "Zapp TV $VERSION" \
+            --notes "Zapp (upstream main $UPSTREAM) with custom channels from M3U playlists. Built by ${{ github.event_name }}."
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          NTFY_URL: ${{ secrets.NTFY_URL }}
+        run: |
+          [ -n "$NTFY_URL" ] || exit 0
+          curl -s -H "Priority: 4" -H "Title: Zapp TV build failed" -H "Tags: warning" \
+            -d "Workflow ${{ github.event_name }} failed (rebase conflict or build error): ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            "$NTFY_URL" > /dev/null
