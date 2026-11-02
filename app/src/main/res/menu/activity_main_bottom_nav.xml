@@ -6,6 +6,12 @@
 		android:icon="@drawable/ic_ondemand_video_white_24dp"
 		android:title="@string/activity_main_tab_live" />
 
+	<!-- Zapp TV: channels from the user's own playlists -->
+	<item
+		android:id="@+id/customChannelListFragment"
+		android:icon="@drawable/ic_live_tv_white_24dp"
+		android:title="@string/activity_main_tab_custom" />
+
 	<item
 		android:id="@+id/mediathekListFragment"
 		android:icon="@drawable/ic_outline_video_library_24"

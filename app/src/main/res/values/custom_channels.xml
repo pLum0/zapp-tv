@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Zapp TV: custom channels from M3U playlists (German = default locale of this app) -->
+<resources>
+	<string name="pref_key_custom_channel_urls" translatable="false">pref_key_custom_channel_urls</string>
+	<string name="pref_custom_channel_urls_title">Eigene Senderlisten (M3U)</string>
+	<string name="pref_custom_channel_urls_summary">Adressen von M3U-Playlists, durch Leerzeichen getrennt. Die Sender erscheinen im Tab „Eigene“ und lassen sich unter „Senderauswahl“ sortieren und ausblenden.</string>
+	<string name="pref_custom_channel_urls_dialog_message">z. B. eine TVheadend-Playlist. Mehrere Adressen mit Leerzeichen trennen.</string>
+	<string name="activity_main_tab_custom">Eigene</string>
+</resources>

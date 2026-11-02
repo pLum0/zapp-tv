@@ -19,7 +19,9 @@ class JsonChannelList(private val context: Context) : IChannelList {
 
 	init {
 		val parser = JsonChannelsParser(context)
-		list = parser.parse(getJsonString())
+		// Zapp TV: plus the channels from the user's own playlists
+		list = parser.parse(getJsonString()) +
+			de.christinecoenen.code.zapp.models.channels.custom.CustomChannels.cached(context)
 	}
 
 	override fun get(index: Int) = list[index]

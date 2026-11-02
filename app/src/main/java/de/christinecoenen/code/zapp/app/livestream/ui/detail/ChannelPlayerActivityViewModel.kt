@@ -18,17 +18,20 @@ class ChannelPlayerActivityViewModel(channelRepository: ChannelRepository) : Vie
 	private val channelFlow = channelId
 		.map { channelId -> channelList[channelId]!! }
 
+	// Zapp TV: switch only within the channel's group (custom playlist channels vs. Zapp's own)
 	val previousChannelLiveData = channelFlow
 		.map { channel ->
-			val index = channelList.indexOf(channel.id)
-			if (index <= 0) null else channelList[index - 1]
+			val group = de.christinecoenen.code.zapp.models.channels.custom.CustomChannels.sameGroup(channelList, channel)
+			val index = group.indexOfFirst { it.id == channel.id }
+			if (index <= 0) null else group[index - 1]
 		}
 		.asLiveData(viewModelScope.coroutineContext)
 
 	val nextChannelLiveData = channelFlow
 		.map { channel ->
-			val index = channelList.indexOf(channel.id)
-			if (index >= channelList.size() - 1) null else channelList[index + 1]
+			val group = de.christinecoenen.code.zapp.models.channels.custom.CustomChannels.sameGroup(channelList, channel)
+			val index = group.indexOfFirst { it.id == channel.id }
+			if (index >= group.size - 1) null else group[index + 1]
 		}
 		.asLiveData(viewModelScope.coroutineContext)
 

@@ -118,6 +118,7 @@ class ChannelViewHolder(
 
 	private fun setViewToChannel(channel: ChannelModel) {
 		bindingAdapter.logo.setImageResource(channel.drawableId)
+		de.christinecoenen.code.zapp.models.channels.custom.CustomChannels.applyLogo(bindingAdapter.logo, channel) // Zapp TV
 		bindingAdapter.logo.contentDescription = channel.name
 
 		bindingAdapter.subtitle.text = channel.subtitle

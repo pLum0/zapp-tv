@@ -31,7 +31,11 @@ class ChannelListFragment : Fragment(), MenuProvider, ListItemListener {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		channelList = SortableVisibleJsonChannelList(requireContext())
+		// Zapp TV: the same fragment is the Live tab (Zapp's channels) and the "Eigene" tab (custom_only=true)
+		channelList = de.christinecoenen.code.zapp.models.channels.custom.CustomChannels.forTab(
+			SortableVisibleJsonChannelList(requireContext()),
+			arguments?.getBoolean("custom_only") ?: false
+		)
 		gridAdapter = ChannelListAdapter(channelList, this, this)
 	}
 
