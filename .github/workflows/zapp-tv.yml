@@ -100,7 +100,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           UPSTREAM=$(git rev-parse --short upstream/main)
-          gh release create "v$VERSION" "zapp-tv-$VERSION.apk" --target "$(git rev-parse HEAD)" \
+          # --repo: with the "upstream" remote present, gh would otherwise target cemrich/zapp
+          gh release create "v$VERSION" "zapp-tv-$VERSION.apk" --repo "${{ github.repository }}" \
+            --target "$(git rev-parse HEAD)" \
             --title "Zapp TV $VERSION" \
             --notes "Zapp (upstream main $UPSTREAM) with custom channels from M3U playlists. Built by ${{ github.event_name }}."
 
